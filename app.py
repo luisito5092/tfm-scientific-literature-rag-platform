@@ -22,7 +22,7 @@ pages = [
     ),
     st.Page(
         "pages/evaluation.py",
-        title="Evaluation",
+        title="Retrieval Evaluation",
         icon=":material/analytics:",
     ),
 ]
