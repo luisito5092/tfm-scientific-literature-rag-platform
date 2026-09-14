@@ -7,22 +7,21 @@ from rag_core import load_evaluation_summary
 st.title("🔬 Scientific Literature Platform")
 st.header("📊 Retrieval Evaluation")
 st.caption(
-    "Comparison of semantic, lexical, hybrid RRF, and hybrid + reranking retrieval."
+    "Comparación de los mecanismos de búsqueda: Búsqueda léxica, semántica, híbrida e híbrida +  reranking"
 )
 
 evaluation_df = load_evaluation_summary()
 
 if evaluation_df is None:
     st.info(
-        "No evaluation summary CSV was found. Place evaluation_summary.csv "
-        "beside app.py after rerunning Script 12 for the final corpus."
+        "No se encontró el CSV evaluation_summary. Cree el evaluation_summary.csv "
     )
     st.stop()
 
 # ---------------------------------------------------------------------
 # Full metric table
 # ---------------------------------------------------------------------
-st.subheader("Evaluation metrics")
+st.subheader("Métricas de Evaluación")
 
 st.dataframe(
     evaluation_df,
@@ -40,17 +39,17 @@ st.caption(
 # Friendly method names
 # ---------------------------------------------------------------------
 method_labels = {
-    "hybrid_reranked": "Hybrid + Reranking",
-    "hybrid_rrf": "Hybrid RRF",
-    "semantic": "Vector",
-    "lexical": "Lexical",
+    "hybrid_reranked": "Híbrida + Reranking",
+    "hybrid_rrf": "Híbrida RRF",
+    "semantic": "Semántica",
+    "lexical": "Léxica",
 }
 
 method_order = [
-    "Hybrid + Reranking",
-    "Hybrid RRF",
-    "Vector",
-    "Lexical",
+    "Híbrida + Reranking",
+    "Híbrida RRF",
+    "Semántica",
+    "Léxica",
 ]
 
 chart_df = evaluation_df.copy()
@@ -192,37 +191,3 @@ if top5_metrics:
         "placing the most relevant evidence higher in the ranking."
     )
 
-# ---------------------------------------------------------------------
-# Interpretation
-# ---------------------------------------------------------------------
-st.subheader("Interpretation")
-
-st.markdown(
-    """
-The evaluation reflects the two-stage retrieval design:
-
-**1. Candidate generation:** Semantic and lexical retrieval are combined with
-Reciprocal Rank Fusion (RRF). Recall@10 measures relevant-evidence coverage at
-a common evaluation depth across all strategies.
-
-**2. Candidate refinement:** The CrossEncoder reranks the strongest RRF
-candidates. Offline evaluation retains the full Top 10 for comparable @10
-metrics, while MRR and nDCG@5 show how well the evidence is ordered near the
-top of the ranking.
-
-The production RAG sends a maximum of **5 final chunks** to Groq.
-"""
-)
-
-with st.expander("Metric definitions"):
-    st.markdown(
-        """
-- **MRR (Mean Reciprocal Rank):** rewards systems that place the first relevant
-  result as early as possible.
-- **Precision@k:** proportion of the first *k* retrieved results that are relevant.
-- **Recall@k:** proportion of the judged relevant evidence recovered within the
-  first *k* results.
-- **nDCG@k:** considers both graded relevance and ranking position, rewarding
-  systems that place highly relevant evidence near the top.
-"""
-    )
