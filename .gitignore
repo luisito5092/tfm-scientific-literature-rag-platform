@@ -1,1 +1,6 @@
 .streamlit/secrets.toml
+__pycache__/
+*.pyc
+.env
+evaluation/candidate_pool.csv
+evaluation/evaluation_results.csv

@@ -63,23 +63,22 @@ else:
     chart_df["Method label"] = chart_df.index.astype(str)
 
 # ---------------------------------------------------------------------
-# Chart 1: Candidate Recall @10 BEFORE reranking
+# Chart 1: Recall @10 across retrieval strategies
 # ---------------------------------------------------------------------
 if "R@10" in chart_df.columns:
-    st.subheader("Candidate Recall @10 — Before Reranking")
+    st.subheader("Recall @10")
     st.caption(
-        "Higher is better. This chart measures how much of the judged relevant "
-        "evidence is recovered within the first 10 candidates before the "
-        "CrossEncoder reranking stage."
+        "Higher is better. This chart compares how much of the judged relevant "
+        "evidence each strategy recovers within its first 10 ranked results."
     )
 
     recall_methods = chart_df[
         chart_df["Method"].isin(
-            ["hybrid_rrf", "semantic", "lexical"]
+            ["hybrid_reranked", "hybrid_rrf", "semantic", "lexical"]
         )
     ].copy()
 
-    recall_order = ["Hybrid RRF", "Vector", "Lexical"]
+    recall_order = ["Hybrid + Reranking", "Hybrid RRF", "Vector", "Lexical"]
 
     recall_chart = (
         alt.Chart(recall_methods)
@@ -110,10 +109,10 @@ if "R@10" in chart_df.columns:
     )
 
     st.info(
-        "**How to read this chart:** Hybrid RRF is expected to maximize "
-        "candidate coverage by combining semantic and lexical retrieval. "
-        "Hybrid + Reranking is intentionally excluded because the reranker "
-        "returns only five final results, so its R@10 is not directly comparable."
+        "**How to read this chart:** compare the four strategies at the same "
+        "cutoff. Offline evaluation retains 10 reranked candidates, making "
+        "R@10 directly comparable across all methods. The production RAG still "
+        "sends only the best five reranked chunks to Groq."
     )
 
 # ---------------------------------------------------------------------
@@ -203,13 +202,13 @@ st.markdown(
 The evaluation reflects the two-stage retrieval design:
 
 **1. Candidate generation:** Semantic and lexical retrieval are combined with
-Reciprocal Rank Fusion (RRF). Recall@10 measures whether this stage is finding
-the relevant evidence before reranking.
+Reciprocal Rank Fusion (RRF). Recall@10 measures relevant-evidence coverage at
+a common evaluation depth across all strategies.
 
 **2. Candidate refinement:** The CrossEncoder reranks the strongest RRF
-candidates. MRR and nDCG@5 are especially useful for checking whether this
-second stage improves the ordering of the evidence that will actually reach
-the LLM.
+candidates. Offline evaluation retains the full Top 10 for comparable @10
+metrics, while MRR and nDCG@5 show how well the evidence is ordered near the
+top of the ranking.
 
 The production RAG sends a maximum of **5 final chunks** to Groq.
 """
