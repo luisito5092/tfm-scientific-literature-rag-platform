@@ -4,36 +4,31 @@ import streamlit as st
 
 from rag_core import load_evaluation_summary
 
+
+# ---------------------------------------------------------------------
+# Page header
+# ---------------------------------------------------------------------
 st.title("🔬 Scientific Literature Platform")
 st.header("📊 Retrieval Evaluation")
+
 st.caption(
-    "Comparación de los mecanismos de búsqueda: Búsqueda léxica, semántica, híbrida e híbrida +  reranking"
+    "Comparación de los mecanismos de búsqueda léxica, semántica, "
+    "híbrida RRF e híbrida con reranking."
 )
 
+
+# ---------------------------------------------------------------------
+# Load evaluation results
+# ---------------------------------------------------------------------
 evaluation_df = load_evaluation_summary()
 
 if evaluation_df is None:
     st.info(
-        "No se encontró el CSV evaluation_summary. Cree el evaluation_summary.csv "
+        "No se encontró el archivo evaluation_summary.csv. "
+        "Ejecute primero la evaluación del sistema."
     )
     st.stop()
 
-# ---------------------------------------------------------------------
-# Full metric table
-# ---------------------------------------------------------------------
-st.subheader("Métricas de Evaluación")
-
-st.dataframe(
-    evaluation_df,
-    use_container_width=True,
-    hide_index=True,
-)
-
-st.caption(
-    "The table contains the complete retrieval evaluation. "
-    "The charts below highlight candidate coverage first, followed by "
-    "top-of-ranking quality."
-)
 
 # ---------------------------------------------------------------------
 # Friendly method names
@@ -52,142 +47,204 @@ method_order = [
     "Léxica",
 ]
 
-chart_df = evaluation_df.copy()
+display_df = evaluation_df.copy()
 
-if "Method" in chart_df.columns:
-    chart_df["Method label"] = chart_df["Method"].map(
-        method_labels
-    ).fillna(chart_df["Method"])
+if "Method" in display_df.columns:
+    display_df["Método"] = (
+        display_df["Method"]
+        .map(method_labels)
+        .fillna(display_df["Method"])
+    )
 else:
-    chart_df["Method label"] = chart_df.index.astype(str)
+    display_df["Método"] = display_df.index.astype(str)
+
 
 # ---------------------------------------------------------------------
-# Chart 1: Recall @10 across retrieval strategies
+# Summary cards
 # ---------------------------------------------------------------------
-if "R@10" in chart_df.columns:
-    st.subheader("Recall @10")
-    st.caption(
-        "Higher is better. This chart compares how much of the judged relevant "
-        "evidence each strategy recovers within its first 10 ranked results."
+st.subheader("Resultados principales")
+
+metric_columns = st.columns(3)
+
+if "MRR" in display_df.columns:
+    best_mrr_idx = display_df["MRR"].idxmax()
+    best_mrr = display_df.loc[best_mrr_idx, "MRR"]
+    best_mrr_method = display_df.loc[best_mrr_idx, "Método"]
+
+    metric_columns[0].metric(
+        label="Mejor MRR",
+        value=f"{best_mrr:.4f}",
     )
+    metric_columns[0].caption(best_mrr_method)
 
-    recall_methods = chart_df[
-        chart_df["Method"].isin(
-            ["hybrid_reranked", "hybrid_rrf", "semantic", "lexical"]
-        )
-    ].copy()
+if "nDCG@5" in display_df.columns:
+    best_ndcg5_idx = display_df["nDCG@5"].idxmax()
+    best_ndcg5 = display_df.loc[best_ndcg5_idx, "nDCG@5"]
+    best_ndcg5_method = display_df.loc[best_ndcg5_idx, "Método"]
 
-    recall_order = ["Hybrid + Reranking", "Hybrid RRF", "Vector", "Lexical"]
-
-    recall_chart = (
-        alt.Chart(recall_methods)
-        .mark_bar()
-        .encode(
-            x=alt.X(
-                "Method label:N",
-                sort=recall_order,
-                title="Retrieval strategy",
-                axis=alt.Axis(labelAngle=0),
-            ),
-            y=alt.Y(
-                "R@10:Q",
-                title="Recall@10",
-                scale=alt.Scale(domain=[0, 1]),
-            ),
-            tooltip=[
-                alt.Tooltip("Method label:N", title="Retrieval"),
-                alt.Tooltip("R@10:Q", title="Recall@10", format=".4f"),
-            ],
-        )
-        .properties(height=340)
+    metric_columns[1].metric(
+        label="Mejor nDCG@5",
+        value=f"{best_ndcg5:.4f}",
     )
+    metric_columns[1].caption(best_ndcg5_method)
 
-    st.altair_chart(
-        recall_chart,
-        use_container_width=True,
-    )
+if "nDCG@10" in display_df.columns:
+    best_ndcg10_idx = display_df["nDCG@10"].idxmax()
+    best_ndcg10 = display_df.loc[best_ndcg10_idx, "nDCG@10"]
+    best_ndcg10_method = display_df.loc[best_ndcg10_idx, "Método"]
 
-    st.info(
-        "**How to read this chart:** compare the four strategies at the same "
-        "cutoff. Offline evaluation retains 10 reranked candidates, making "
-        "R@10 directly comparable across all methods. The production RAG still "
-        "sends only the best five reranked chunks to Groq."
+    metric_columns[2].metric(
+        label="Mejor nDCG@10",
+        value=f"{best_ndcg10:.4f}",
     )
+    metric_columns[2].caption(best_ndcg10_method)
+
+
+st.divider()
+
 
 # ---------------------------------------------------------------------
-# Chart 2: Top-5 retrieval quality — grouped bars by retrieval strategy
+# Compact evaluation table
 # ---------------------------------------------------------------------
-top5_metrics = [
-    metric
-    for metric in ["MRR", "P@5", "R@5", "nDCG@5"]
-    if metric in chart_df.columns
+st.subheader("Comparación de estrategias")
+
+preferred_metrics = [
+    "MRR",
+    "P@5",
+    "R@5",
+    "nDCG@5",
+    "P@10",
+    "R@10",
+    "nDCG@10",
 ]
 
-if top5_metrics:
-    st.subheader("Top-5 Retrieval Quality")
+available_metrics = [
+    metric
+    for metric in preferred_metrics
+    if metric in display_df.columns
+]
+
+table_df = display_df[
+    ["Método"] + available_metrics
+].copy()
+
+# Preserve desired method order
+table_df["Método"] = pd.Categorical(
+    table_df["Método"],
+    categories=method_order,
+    ordered=True,
+)
+
+table_df = (
+    table_df
+    .sort_values("Método")
+    .reset_index(drop=True)
+)
+
+st.dataframe(
+    table_df,
+    use_container_width=True,
+    hide_index=True,
+    column_config={
+        metric: st.column_config.NumberColumn(
+            metric,
+            format="%.4f",
+        )
+        for metric in available_metrics
+    },
+)
+
+st.caption(
+    "Agregación de los resultados obtenidos mediante el proceso de evaluación."
+)
+
+
+st.divider()
+
+
+# ---------------------------------------------------------------------
+# Main chart: ranking quality
+# ---------------------------------------------------------------------
+ndcg_metrics = [
+    metric
+    for metric in ["nDCG@5", "nDCG@10"]
+    if metric in display_df.columns
+]
+
+if ndcg_metrics:
+    st.subheader("Calidad del ordenamiento de resultados")
+
     st.caption(
-        "Higher is better. Each retrieval strategy is represented on the x-axis, "
-        "with four side-by-side bars comparing its Top-5 evaluation metrics."
+        "nDCG evalúa no solo si se recupera evidencia relevante, sino también "
+        "si los fragmentos con mayor relevancia aparecen en las primeras "
+        "posiciones del ranking."
     )
 
-    quality_long = (
-        chart_df[
-            ["Method label"] + top5_metrics
-        ]
+    chart_source = display_df[
+        ["Método"] + ndcg_metrics
+    ].copy()
+
+    chart_source["Método"] = pd.Categorical(
+        chart_source["Método"],
+        categories=method_order,
+        ordered=True,
+    )
+
+    chart_source = (
+        chart_source
+        .sort_values("Método")
         .melt(
-            id_vars=["Method label"],
-            value_vars=top5_metrics,
-            var_name="Metric",
+            id_vars=["Método"],
+            value_vars=ndcg_metrics,
+            var_name="Métrica",
             value_name="Score",
         )
     )
 
-    metric_order = ["MRR", "P@5", "R@5", "nDCG@5"]
-
-    quality_chart = (
-        alt.Chart(quality_long)
+    ndcg_chart = (
+        alt.Chart(chart_source)
         .mark_bar()
         .encode(
             x=alt.X(
-                "Method label:N",
+                "Método:N",
                 sort=method_order,
-                title="Retrieval strategy",
+                title="Estrategia de recuperación",
                 axis=alt.Axis(labelAngle=0),
             ),
             xOffset=alt.XOffset(
-                "Metric:N",
-                sort=metric_order,
+                "Métrica:N",
+                sort=["nDCG@5", "nDCG@10"],
             ),
             y=alt.Y(
                 "Score:Q",
-                title="Metric score",
+                title="nDCG",
                 scale=alt.Scale(domain=[0, 1]),
             ),
             color=alt.Color(
-                "Metric:N",
-                sort=metric_order,
-                title="Metric",
+                "Métrica:N",
+                sort=["nDCG@5", "nDCG@10"],
+                title="Métrica",
             ),
             tooltip=[
-                alt.Tooltip("Method label:N", title="Retrieval"),
-                alt.Tooltip("Metric:N", title="Metric"),
-                alt.Tooltip("Score:Q", title="Score", format=".4f"),
+                alt.Tooltip(
+                    "Método:N",
+                    title="Estrategia",
+                ),
+                alt.Tooltip(
+                    "Métrica:N",
+                    title="Métrica",
+                ),
+                alt.Tooltip(
+                    "Score:Q",
+                    title="Resultado",
+                    format=".4f",
+                ),
             ],
         )
         .properties(height=380)
     )
 
     st.altair_chart(
-        quality_chart,
+        ndcg_chart,
         use_container_width=True,
     )
-
-    st.info(
-        "**How to read this chart:** Within each retrieval strategy, compare "
-        "MRR, P@5, R@5, and nDCG@5. Across strategies, compare bars with the "
-        "same metric. MRR rewards placing the first relevant result early; "
-        "P@5 measures precision in the first five results; R@5 measures "
-        "relevant-evidence coverage in those five positions; nDCG@5 rewards "
-        "placing the most relevant evidence higher in the ranking."
-    )
-
