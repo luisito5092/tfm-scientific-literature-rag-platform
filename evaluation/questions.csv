@@ -1,11 +1,24 @@
 ﻿query_id,question
-Q01,What treatments are available for Gaucher disease?
-Q02,What is the role of enzyme replacement therapy in Gaucher disease?
-Q03,What genetic variants are associated with Gaucher disease?
-Q04,How is Gaucher disease diagnosed?
-Q05,What are the main clinical manifestations of Gaucher disease?
-Q06,What treatments are used for Pompe disease?
-Q07,What treatments are available for Fabry disease?
-Q08,What challenges affect access to therapies for rare metabolic diseases?
-Q09,How did the COVID-19 pandemic affect treatment of lysosomal storage diseases?
-Q10,What role does newborn screening play in lysosomal storage diseases?
+Q01,How is AI helping to diagnose inherited diseases at an early stage?
+Q02,What are inherited metabolic diseases? Give me some examples.
+Q03,Did COVID affect people with genetic or inherited diseases in any way?
+Q04,What is Harlequin Ichthyosis?
+Q05,Name at least 3 very rare and severe congenital diseases.
+Q06,How is APDS diagnosed?
+Q07,What treatments are available for Duchenne Muscular Dystrophy?
+Q08,What is considered a rare genetic disease?
+Q09,What is personalized RNA medicine and what is it used for?
+Q10,What percentage of rare diseases are usually caused by genetic factors?
+Q11,How accurate are LLMs in diagnosing rare diseases?
+Q12,What is Risdiplam used for and how effective is it?
+Q13,What are orphan drugs and how accessible are they?
+Q14,What is Hereditary Angioedema?
+Q15,What organizations or programs help diagnose genetic diseases?
+Q16,What diseases cause muscle atrophy?
+Q17,What disease is caused by a deficiency of the enzyme alpha-N-acetylglucosaminidase?
+Q18,Why is the diagnosis of rare diseases delayed even when diagnostic technology is available?
+Q19,"What rare disease could be associated with neonatal hypotonia, feeding difficulties, weak sucking, reduced limb movements, decreased alertness, and diminished neonatal reflexes?"
+Q20,How many of the six families with suspected monogenic diseases received a molecular diagnosis using the multimodal approach?
+Q21,What precision treatments are available for genetic diseases?
+Q22,Approximately what percentage of the Brazilian population is affected by rare diseases?
+Q23,What results has NGS achieved in diagnosing rare diseases in Brazil?
