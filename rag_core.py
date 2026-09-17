@@ -9,24 +9,12 @@ from sentence_transformers import SentenceTransformer, CrossEncoder
 
 
 # ============================================================
-# 14 - Streamlit RAG App
-# ============================================================
-# Generic UI: intentionally NOT hard-coded to a single scientific domain.
-# When the corpus is replaced, the same app can be reused.
-#
-# Pipeline:
-# User question
-#   -> Groq translation to English
-#   -> Semantic + Lexical retrieval
-#   -> Reciprocal Rank Fusion (RRF)
-#   -> Cross-Encoder reranking
-#   -> Top 5 context
-#   -> Groq grounded answer
+# ==================== Streamlit RAG App =====================
 # ============================================================
 
-
-
-
+# ============================================================
+# Variables
+# ============================================================
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 RERANKER_MODEL_NAME = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 

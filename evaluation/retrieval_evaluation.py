@@ -9,7 +9,7 @@ from collections import defaultdict
 import pg8000
 from sentence_transformers import SentenceTransformer, CrossEncoder
 
-# Reuse the exact retrieval implementation used by the Streamlit app.
+# Reutilizar mismos recursos o funciones de la aplicacion principal
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
@@ -27,56 +27,17 @@ from rag_core import (
     rerank_results,
 )
 
-
 # ============================================================
-# 12 - Retrieval Evaluation
-# ============================================================
-#
-# Compares:
-#   1. Semantic
-#   2. Lexical
-#   3. Hybrid RRF
-#   4. Hybrid RRF + Cross-Encoder reranker
-#
-# Retrieval functions are imported from rag_core.py so evaluation and app
-# use the same implementation. Evaluation retains Top 10 after reranking;
-# the production app intentionally sends only Top 5 chunks to Groq.
-#
-# Evaluation workflow:
-#
-#   A) POOL MODE
-#      - Read questions.csv
-#      - Run all retrieval methods
-#      - Pool unique candidates
-#      - Export candidate_pool.csv
-#      - Manually assign relevance_grade:
-#            0 = Not relevant
-#            1 = Marginally relevant
-#            2 = Relevant
-#            3 = Highly relevant
-#
-#   B) EVALUATE MODE
-#      - Read the manually judged candidate_pool.csv
-#      - Re-run all retrieval methods
-#      - Calculate:
-#            Precision@k
-#            Recall@k
-#            MRR
-#            nDCG@k
-#
-# IMPORTANT:
-# Recall is relative to the judged pool, which is standard for pooled
-# information-retrieval evaluation but is not guaranteed to represent
-# every relevant chunk in the full corpus.
+# ================== Retrieval Evaluation ====================
 # ============================================================
 
 
-# Evaluation depth is intentionally 10 even though the production app sends only Top 5 to Groq.
+# Se evaluan 10 chunks aunque la app solamente retorna 5
 EVALUATION_RERANKED_TOP_K = 10
 POOL_PER_METHOD = 10
 EVAL_K_VALUES = [1, 3, 5, 10]
 
-
+#Conexion a Supabase
 def get_connection():
     return pg8000.connect(
         host=os.environ["SUPABASE_HOST"],
@@ -87,7 +48,7 @@ def get_connection():
         ssl_context=True,
     )
 
-
+#Carga de modelos
 def load_models():
     print(f"Loading embedding model: {EMBEDDING_MODEL_NAME}")
     embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
@@ -99,7 +60,7 @@ def load_models():
 
     return embedding_model, reranker
 
-
+#Funcion para ejecutar todas las estrategias
 def run_all_methods(
     connection,
     embedding_model,
@@ -143,7 +104,7 @@ def run_all_methods(
         "hybrid_reranked": reranked,
     }
 
-
+#Lectura de las preguntas
 def read_questions(path):
     questions = []
 
@@ -169,7 +130,7 @@ def read_questions(path):
 
     return questions
 
-
+#Generacion de candidatos pregunta-chunck
 def pool_candidates(
     questions,
     connection,
@@ -345,7 +306,7 @@ def read_qrels(path):
 
     return qrels
 
-
+#Calculo del Precision
 def precision_at_k(ranked_chunk_ids, relevance_map, k):
     retrieved = ranked_chunk_ids[:k]
 
@@ -360,7 +321,7 @@ def precision_at_k(ranked_chunk_ids, relevance_map, k):
 
     return relevant_count / k
 
-
+#Calculo del Recall
 def recall_at_k(ranked_chunk_ids, relevance_map, k):
     total_relevant = sum(
         1
@@ -379,7 +340,7 @@ def recall_at_k(ranked_chunk_ids, relevance_map, k):
 
     return retrieved_relevant / total_relevant
 
-
+#Calculo del MRR
 def reciprocal_rank(ranked_chunk_ids, relevance_map):
     for rank, chunk_id in enumerate(ranked_chunk_ids, start=1):
         if relevance_map.get(chunk_id, 0) > 0:
@@ -387,7 +348,7 @@ def reciprocal_rank(ranked_chunk_ids, relevance_map):
 
     return 0.0
 
-
+#Calculo del DCCG
 def dcg_at_k(ranked_chunk_ids, relevance_map, k):
     dcg = 0.0
 
@@ -402,7 +363,7 @@ def dcg_at_k(ranked_chunk_ids, relevance_map, k):
 
     return dcg
 
-
+#Calculo del nDCCG
 def ndcg_at_k(ranked_chunk_ids, relevance_map, k):
     actual_dcg = dcg_at_k(
         ranked_chunk_ids,
@@ -436,7 +397,7 @@ def mean_ignore_none(values):
 
     return sum(valid) / len(valid)
 
-
+#Funcion para ejecutar la evaluacion
 def evaluate(
     questions,
     qrels,
@@ -578,7 +539,7 @@ def evaluate(
         reverse=True,
     )
 
-    # Streamlit-friendly aggregate schema.
+    # Schema con el que se mostraran las metricas en Streamlit
     summary_rows = []
     for result in summary:
         row = {"Method": result["method"], "MRR": result["MRR"]}
