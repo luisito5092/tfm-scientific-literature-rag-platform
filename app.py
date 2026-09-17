@@ -34,10 +34,10 @@ navigation = st.navigation(
 
 with st.sidebar:
     st.caption("System")
-    st.write("Embedding model: `all-MiniLM-L6-v2`")
-    st.write("Vector store: `Supabase + pgvector`")
+    st.write("Embedding model: `sentence-transformers/all-MiniLM-L6-v2`")
+    st.write("DB Provider: `Supabase (PostgreSQL + pgvector)`")
     st.write("Retrieval: `Semantic + Lexical + RRF`")
-    st.write("Reranker: `ms-marco-MiniLM-L-6-v2`")
+    st.write("Reranker: `cross-encoder/ms-marco-MiniLM-L-6-v2`")
     st.write("LLM provider: `Groq`")
     st.write(f"LLM model: `{get_groq_model()}`")
 
