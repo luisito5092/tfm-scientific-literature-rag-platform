@@ -15,7 +15,6 @@ from rag_core import (
 
 st.title("🔬 Scientific Literature Platform")
 st.header("💬 Ask Literature")
-st.caption("Ask questions against the indexed scientific literature.")
 
 
 def evidence_column_config(active_strategy):

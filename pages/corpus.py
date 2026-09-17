@@ -10,9 +10,6 @@ from rag_core import (
 
 st.title("🔬 Scientific Literature Platform")
 st.header("📚 Corpus Explorer")
-st.caption(
-    "Explore the documents and chunks currently indexed in Supabase."
-)
 
 # ---------------------------------------------------------------------
 # Corpus summary
